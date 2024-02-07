@@ -54,7 +54,12 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: terraform init -backend-config="bucket=${{ github.event.inputs.account_id }}-tfstate-${{ github.event.inputs.region }}" -backend-config="key=environment/hb_sec_environment.tfstate" -backend-config="key=encrypt=true" -backend-config="dynamodb_table=${{ github.event.inputs.account_id }}-tfstate-${{ github.event.inputs.region }}"
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ github.event.inputs.account_id }}-tfstate-${{ github.event.inputs.region }}" \
+            -backend-config="key=environment/hb_sec_environment.tfstate" \
+            -backend-config="encrypt=true" \
+            -backend-config="dynamodb_table=${{ github.event.inputs.account_id }}-tfstate-${{ github.event.inputs.region }}"
 
       - name: Terraform Validate
         id: validate
