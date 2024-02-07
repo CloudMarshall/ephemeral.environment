@@ -1,0 +1,61 @@
+name: New Account Creation via Control Tower - Deploy Terraform Environment Stack
+permissions:
+  id-token: write
+  contents: read
+
+on:
+  workflow_dispatch:
+    inputs:
+      account_id:
+        description: 'AWS Account ID to Target'
+        required: true 
+      region:
+        description: 'AWS Account Region to Target'
+        required: true
+
+env:
+  ORG: hb-sec
+
+jobs:
+  checkov:
+    name: Checkov
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Checkov Terraform Scan
+        id: checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          quiet: true 
+          soft_fail: true
+          download_external_modules: true
+  deploy:
+    name: Deploy Ephemeral Terraform Environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ github.event.inputs.account_id }}:role/HB-Sec-OIDC-DeploymentRole
+          aws-region: ${{ env.REGION }}
+          role-skip-session-tagging: true
+  
+      - name: Terraform fmt
+        id: fmt
+        run: terraform fmt -check
+        continue-on-error: true
+
+      - name: Terraform Init
+        id: init
+        run: terraform init -backend-config="bucket=${{ github.event.inputs.account_id }}-tfstate-${{ github.event.inputs.region }}" -backend-config="key=environment/hb_sec_environment.tfstate" -backend-config="key=encrypt=true" -backend-config="dynamodb_table=${{ github.event.inputs.account_id }}-tfstate-${{ github.event.inputs.region }}"
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Terraform Auto Apply
+        id: apply
+        run: terraform apply -var-file="params/params.tfvars" -auto-approve -no-color

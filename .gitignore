@@ -1,0 +1,6 @@
+.terraform
+*.tfout
+*.out
+*builds
+*.external_modules
+.localterraform

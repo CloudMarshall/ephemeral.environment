@@ -1,0 +1,5 @@
+bucket         = "721870922255-tfstate-eu-west-1"
+key            = "environment/hb_sec_environment.tfstate"
+encrypt        = "true"
+region         = "eu-west-1"
+dynamodb_table = "721870922255-tfstate-eu-west-1"
